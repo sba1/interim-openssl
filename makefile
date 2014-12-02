@@ -16,3 +16,7 @@ checkout: bin
 build:
 	cd openssl/repo && ./Configure --openssldir=DEVS:AmiSSL no-hw no-dso amigaos-ppc
 	cd openssl/repo && make
+
+build-clib2:
+	cd openssl/repo && ./Configure --openssldir=DEVS:AmiSSL no-hw no-dso amigaos-ppc-clib2
+	cd openssl/repo && make build_libs
