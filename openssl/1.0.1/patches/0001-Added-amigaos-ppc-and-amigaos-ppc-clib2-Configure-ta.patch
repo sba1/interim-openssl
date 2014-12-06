@@ -34,15 +34,6 @@ index 6f0da76..78bd7f0 100755
  #### *BSD [do see comment about ${BSDthreads} above!]
  "BSD-generic32","gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  "BSD-x86",	"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_asm}:a.out:dlfcn:bsd-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-@@ -1992,7 +1995,7 @@ BEGIN
- 	    VALUE "ProductVersion", "$version\\0"
- 	    // Optional:
- 	    //VALUE "Comments", "\\0"
--	    VALUE "LegalCopyright", "Copyright © 1998-2005 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
-+	    VALUE "LegalCopyright", "Copyright © 1998-2005 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
- 	    //VALUE "LegalTrademarks", "\\0"
- 	    //VALUE "PrivateBuild", "\\0"
- 	    //VALUE "SpecialBuild", "\\0"
 diff --git a/apps/apps.c b/apps/apps.c
 index 3e18289..15aba54 100644
 --- a/apps/apps.c
