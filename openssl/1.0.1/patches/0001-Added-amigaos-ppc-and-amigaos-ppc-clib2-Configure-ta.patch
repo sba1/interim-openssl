@@ -1,20 +1,27 @@
-From 34c0cfac81dbb70649dc61398fc5383e9ff0a44b Mon Sep 17 00:00:00 2001
+From 4ac443e7ada358a93df08b9b32051cd72ebec614 Mon Sep 17 00:00:00 2001
 From: Sebastian Bauer <mail@sebastianbauer.info>
 Date: Tue, 2 Dec 2014 20:14:32 +0100
 Subject: [PATCH] Added "amigaos-ppc" and "amigaos-ppc-clib2" Configure target.
 
-Also applied some modifications for AmigaOS4 port.
+Also applied some modifications for a possible AmigaOS port
+targeting version 4.1.
 ---
- Configure               | 3 +++
- apps/apps.c             | 2 +-
- apps/ca.c               | 2 +-
- crypto/pkcs7/bio_pk7.c  | 2 +-
- crypto/rand/rand_unix.c | 2 ++
- crypto/ui/ui_openssl.c  | 8 +++++++-
- 6 files changed, 15 insertions(+), 4 deletions(-)
+ Configure                | 5 ++++-
+ apps/apps.c              | 2 +-
+ apps/ca.c                | 2 +-
+ crypto/cryptlib.c        | 4 +++-
+ crypto/pkcs7/bio_pk7.c   | 2 +-
+ crypto/rand/Makefile     | 5 +++--
+ crypto/rand/rand_amiga.c | 6 ++++++
+ crypto/rand/rand_egd.c   | 2 +-
+ crypto/rand/rand_unix.c  | 4 +++-
+ crypto/ui/ui_openssl.c   | 8 +++++++-
+ ssl/ssl_sess.c           | 3 ++-
+ 11 files changed, 32 insertions(+), 11 deletions(-)
+ create mode 100644 crypto/rand/rand_amiga.c
 
 diff --git a/Configure b/Configure
-index 6f0da76..00a45f0 100755
+index 6f0da76..78bd7f0 100755
 --- a/Configure
 +++ b/Configure
 @@ -408,6 +408,9 @@ my %table=(
@@ -27,6 +34,15 @@ index 6f0da76..00a45f0 100755
  #### *BSD [do see comment about ${BSDthreads} above!]
  "BSD-generic32","gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  "BSD-x86",	"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_asm}:a.out:dlfcn:bsd-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+@@ -1992,7 +1995,7 @@ BEGIN
+ 	    VALUE "ProductVersion", "$version\\0"
+ 	    // Optional:
+ 	    //VALUE "Comments", "\\0"
+-	    VALUE "LegalCopyright", "Copyright © 1998-2005 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
++	    VALUE "LegalCopyright", "Copyright © 1998-2005 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
+ 	    //VALUE "LegalTrademarks", "\\0"
+ 	    //VALUE "PrivateBuild", "\\0"
+ 	    //VALUE "SpecialBuild", "\\0"
 diff --git a/apps/apps.c b/apps/apps.c
 index 3e18289..15aba54 100644
 --- a/apps/apps.c
@@ -53,6 +69,35 @@ index 9c25026..2b99cac 100644
  #    include <sys/file.h>
  #  endif
  #endif
+diff --git a/crypto/cryptlib.c b/crypto/cryptlib.c
+index 0b77d8b..d756bfd 100644
+--- a/crypto/cryptlib.c
++++ b/crypto/cryptlib.c
+@@ -904,7 +904,7 @@ void OPENSSL_showfatal (const char *fmta,...)
+ { va_list ap;
+ 
+     va_start (ap,fmta);
+-    vfprintf (stderr,fmta,ap);
++//    vfprintf (stderr,fmta,ap);
+     va_end (ap);
+ }
+ int OPENSSL_isservice (void) { return 0; }
+@@ -912,6 +912,7 @@ int OPENSSL_isservice (void) { return 0; }
+ 
+ void OpenSSLDie(const char *file,int line,const char *assertion)
+ 	{
++#if 0
+ 	OPENSSL_showfatal(
+ 		"%s(%d): OpenSSL internal error, assertion failed: %s\n",
+ 		file,line,assertion);
+@@ -922,6 +923,7 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
+ 	raise(SIGABRT);
+ 	_exit(3);
+ #endif
++#endif
+ 	}
+ 
+ void *OPENSSL_stderr(void)	{ return stderr; }
 diff --git a/crypto/pkcs7/bio_pk7.c b/crypto/pkcs7/bio_pk7.c
 index 0fd31e7..f0384f5 100644
 --- a/crypto/pkcs7/bio_pk7.c
@@ -66,11 +111,65 @@ index 0fd31e7..f0384f5 100644
  #include <memory.h>
  #endif
  #include <stdio.h>
+diff --git a/crypto/rand/Makefile b/crypto/rand/Makefile
+index 27694aa..ea287f7 100644
+--- a/crypto/rand/Makefile
++++ b/crypto/rand/Makefile
+@@ -18,9 +18,9 @@ APPS=
+ 
+ LIB=$(TOP)/libcrypto.a
+ LIBSRC=md_rand.c randfile.c rand_lib.c rand_err.c rand_egd.c \
+-	rand_win.c rand_unix.c rand_os2.c rand_nw.c
++	rand_amiga.c rand_win.c rand_unix.c rand_os2.c rand_nw.c
+ LIBOBJ=md_rand.o randfile.o rand_lib.o rand_err.o rand_egd.o \
+-	rand_win.o rand_unix.o rand_os2.o rand_nw.o
++	rand_amiga.o rand_win.o rand_unix.o rand_os2.o rand_nw.o
+ 
+ SRC= $(LIBSRC)
+ 
+@@ -155,6 +155,7 @@ rand_win.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+ rand_win.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+ rand_win.o: ../../include/openssl/symhacks.h ../cryptlib.h rand_lcl.h
+ rand_win.o: rand_win.c
++rand_amiga.o: rand_amiga.c
+ randfile.o: ../../e_os.h ../../include/openssl/buffer.h
+ randfile.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ randfile.o: ../../include/openssl/opensslconf.h
+diff --git a/crypto/rand/rand_amiga.c b/crypto/rand/rand_amiga.c
+new file mode 100644
+index 0000000..33f22d6
+--- /dev/null
++++ b/crypto/rand/rand_amiga.c
+@@ -0,0 +1,6 @@
++#if defined(OPENSSL_SYSNAME_AMIGAOS)
++int RAND_poll(void)
++{
++	return 0;
++}
++#endif
+diff --git a/crypto/rand/rand_egd.c b/crypto/rand/rand_egd.c
+index d53b916..9f6a4e5 100644
+--- a/crypto/rand/rand_egd.c
++++ b/crypto/rand/rand_egd.c
+@@ -95,7 +95,7 @@
+  *   RAND_egd() is a wrapper for RAND_egd_bytes() with numbytes=255.
+  */
+ 
+-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_VOS) || defined(OPENSSL_SYS_BEOS)
++#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_VOS) || defined(OPENSSL_SYS_BEOS) || defined(OPENSSL_SYSNAME_AMIGAOS)
+ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
+ 	{
+ 	return(-1);
 diff --git a/crypto/rand/rand_unix.c b/crypto/rand/rand_unix.c
-index e3a6557..cf0cd0a 100644
+index e3a6557..4ca5b51 100644
 --- a/crypto/rand/rand_unix.c
 +++ b/crypto/rand/rand_unix.c
-@@ -120,7 +120,9 @@
+@@ -116,11 +116,13 @@
+ #include <openssl/rand.h>
+ #include "rand_lcl.h"
+ 
+-#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE))
++#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYSNAME_AMIGAOS))
  
  #include <sys/types.h>
  #include <sys/time.h>
@@ -106,6 +205,20 @@ index a38c758..f1f1407 100644
  static TTY_STRUCT tty_orig,tty_new;
  #endif
  #endif
+diff --git a/ssl/ssl_sess.c b/ssl/ssl_sess.c
+index ad40fad..e3eae87 100644
+--- a/ssl/ssl_sess.c
++++ b/ssl/ssl_sess.c
+@@ -493,7 +493,8 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
+ 		try_session_cache = 0;
+ 		break;
+ 	default:
+-		abort();
++		//abort();
++		break;
+ 		}
+ #endif
+ 
 -- 
 2.1.3
 
