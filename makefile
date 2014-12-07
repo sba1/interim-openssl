@@ -19,4 +19,8 @@ build:
 
 build-clib2: checkout
 	cd openssl/repo && ./Configure --openssldir=DEVS:AmiSSL no-hw no-dso amigaos-ppc-clib2
+	# Fix up the paths
+	sed <openssl/repo/Makefile -e "s/DEVS:AmiSSL\/DEVS:AmiSSL/DEVS:AmiSSL/" >/tmp/$@.ssl && mv /tmp/$@.ssl openssl/repo/Makefile
+	sed <openssl/repo/crypto/opensslconf.h -e "s/DEVS:AmiSSL\/DEVS:AmiSSL/DEVS:AmiSSL/" >/tmp/$@.ssl && mv /tmp/$@.ssl openssl/repo/crypto/opensslconf.h
+	sed <openssl/repo/tools/c_rehash -e "s/DEVS:AmiSSL\/DEVS:AmiSSL/DEVS:AmiSSL/" >/tmp/$@.ssl && mv /tmp/$@.ssl openssl/repo/tools/c_rehash
 	cd openssl/repo && make build_libs
