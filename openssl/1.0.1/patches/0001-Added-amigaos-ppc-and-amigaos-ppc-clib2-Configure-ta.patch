@@ -1,27 +1,30 @@
-From 4ac443e7ada358a93df08b9b32051cd72ebec614 Mon Sep 17 00:00:00 2001
+From cc573779a9ad08f0e83227a7901da3f75e9e988f Mon Sep 17 00:00:00 2001
 From: Sebastian Bauer <mail@sebastianbauer.info>
-Date: Tue, 2 Dec 2014 20:14:32 +0100
+Date: Tue, 9 Dec 2014 20:21:18 +0100
 Subject: [PATCH] Added "amigaos-ppc" and "amigaos-ppc-clib2" Configure target.
 
 Also applied some modifications for a possible AmigaOS port
-targeting version 4.1.
+targeting version 4.1. Some are based on AmiSSL.
 ---
- Configure                | 5 ++++-
- apps/apps.c              | 2 +-
- apps/ca.c                | 2 +-
- crypto/cryptlib.c        | 4 +++-
- crypto/pkcs7/bio_pk7.c   | 2 +-
- crypto/rand/Makefile     | 5 +++--
- crypto/rand/rand_amiga.c | 6 ++++++
- crypto/rand/rand_egd.c   | 2 +-
- crypto/rand/rand_unix.c  | 4 +++-
- crypto/ui/ui_openssl.c   | 8 +++++++-
- ssl/ssl_sess.c           | 3 ++-
- 11 files changed, 32 insertions(+), 11 deletions(-)
+ Configure                |   3 +
+ apps/apps.c              |   2 +-
+ apps/ca.c                |   2 +-
+ crypto/cryptlib.c        |   4 +-
+ crypto/cryptlib.h        |   7 +-
+ crypto/pkcs7/bio_pk7.c   |   2 +-
+ crypto/rand/Makefile     |   5 +-
+ crypto/rand/rand_amiga.c | 182 +++++++++++++++++++++++++++++++++++++++++++++++
+ crypto/rand/rand_egd.c   |   2 +-
+ crypto/rand/rand_unix.c  |   4 +-
+ crypto/txt_db/txt_db.c   |   6 +-
+ crypto/ui/ui_openssl.c   |   8 ++-
+ ssl/ssl_sess.c           |   3 +-
+ ssl/t1_enc.c             |   4 ++
+ 14 files changed, 220 insertions(+), 14 deletions(-)
  create mode 100644 crypto/rand/rand_amiga.c
 
 diff --git a/Configure b/Configure
-index 6f0da76..78bd7f0 100755
+index 6f0da76..00a45f0 100755
 --- a/Configure
 +++ b/Configure
 @@ -408,6 +408,9 @@ my %table=(
@@ -89,6 +92,24 @@ index 0b77d8b..d756bfd 100644
  	}
  
  void *OPENSSL_stderr(void)	{ return stderr; }
+diff --git a/crypto/cryptlib.h b/crypto/cryptlib.h
+index d26f963..50d24bb 100644
+--- a/crypto/cryptlib.h
++++ b/crypto/cryptlib.h
+@@ -79,7 +79,12 @@
+ extern "C" {
+ #endif
+ 
+-#ifndef OPENSSL_SYS_VMS
++#if defined(OPENSSL_SYSNAME_AMIGAOS)
++#define X509_CERT_AREA		"AmiSSL:"
++#define X509_CERT_DIR		"AmiSSL:certs"
++#define X509_CERT_FILE		"AmiSSL:cert.pem"
++#define X509_PRIVATE_DIR	"AmiSSL:private"
++#elif defined(OPENSSL_SYS_VMS)
+ #define X509_CERT_AREA		OPENSSLDIR
+ #define X509_CERT_DIR		OPENSSLDIR "/certs"
+ #define X509_CERT_FILE		OPENSSLDIR "/cert.pem"
 diff --git a/crypto/pkcs7/bio_pk7.c b/crypto/pkcs7/bio_pk7.c
 index 0fd31e7..f0384f5 100644
 --- a/crypto/pkcs7/bio_pk7.c
@@ -128,16 +149,192 @@ index 27694aa..ea287f7 100644
  randfile.o: ../../include/openssl/opensslconf.h
 diff --git a/crypto/rand/rand_amiga.c b/crypto/rand/rand_amiga.c
 new file mode 100644
-index 0000000..33f22d6
+index 0000000..24e167e
 --- /dev/null
 +++ b/crypto/rand/rand_amiga.c
-@@ -0,0 +1,6 @@
-+#if defined(OPENSSL_SYSNAME_AMIGAOS)
+@@ -0,0 +1,182 @@
++/* Based on the correspondingly named file in AmiSSL */
++
++#ifdef OPENSSL_SYSNAME_AMIGAOS
++
++#include <string.h>
++
++#include <openssl/rand.h>
++#include <openssl/sha.h>
++#include "rand_lcl.h"
++
++#ifdef __amigaos4__
++#define __USE_INLINE__
++#define TIMEVAL(x) x
++#endif
++
++#include <proto/exec.h>
++#include <proto/timer.h>
++#include <devices/timer.h>
++
++/* Maximum number of attempts to get a delay of 1 microsecond that is not equal to 0 */
++#define MAX_ATTEMPTS 1000
++
++#ifdef __amigaos4__
++
++#ifdef CreateMsgPort
++#undef CreateMsgPort
++#endif
++#define CreateMsgPort() AllocSysObject(ASOT_PORT,NULL)
++#ifdef DeleteMsgPort
++#undef DeleteMsgPort
++#endif
++#define DeleteMsgPort(msgPort) FreeSysObject(ASOT_PORT,msgPort)
++#ifdef CreateIORequest
++#undef CreateIORequest
++#endif
++#define CreateIORequest(ioReplyPort,size) AllocSysObjectTags(ASOT_IOREQUEST,ASOIOR_ReplyPort,ioReplyPort,ASOIOR_Size,size,TAG_DONE)
++#ifdef DeleteIORequest
++#undef DeleteIORequest
++#endif
++#define DeleteIORequest(ioReq) FreeSysObject(ASOT_IOREQUEST,ioReq)
++
++#else
++
++#define GetInterface(a, b, c, d) 1
++#define DropInterface(x)
++
++#endif /* !__amigaos4__ */
++
 +int RAND_poll(void)
 +{
-+	return 0;
++	unsigned char temp_buffer[SHA_DIGEST_LENGTH], data_buffer[SHA_DIGEST_LENGTH];
++	struct MsgPort *port = NULL;
++	double entropy_added = 0;
++	struct TimeRequest *time_request = NULL;
++#ifdef __amigaos4__
++	struct IOStdReq *entropy_request = NULL;
++
++	if ((port = CreateMsgPort())
++	    && (entropy_request = (struct IOStdReq *)CreateIORequest(port, sizeof(*entropy_request))))
++	{
++		if (OpenDevice(TIMERNAME, UNIT_ENTROPY, (struct IORequest *)entropy_request, 0) == 0)
++		{
++			while(entropy_added < ENTROPY_NEEDED)
++			{
++				entropy_request->io_Command = TR_READENTROPY;
++				entropy_request->io_Data = &temp_buffer[0];
++				entropy_request->io_Length = sizeof(temp_buffer);
++
++				if (DoIO((struct IORequest *)entropy_request) == 0)
++				{
++					SHA1(&temp_buffer[0], sizeof(temp_buffer), &data_buffer[0]);
++					RAND_add(&data_buffer[0], sizeof(data_buffer), sizeof(data_buffer));
++					entropy_added += sizeof(data_buffer);
++				}
++				else
++					break;
++			}
++
++			CloseDevice((struct IORequest *)entropy_request);
++		}
++	}
++
++	DeleteIORequest((struct IORequest *)entropy_request);
++#endif /* __amigaos4__ */
++
++	/* The following block will be used on "classic" machines. It does not generate
++	 * a high degree of randomness, but it does the job since RAND_poll is
++	 * called only once by OpenSSL to generate a 32 byte seed.
++	 */
++	if (entropy_added < ENTROPY_NEEDED
++	    && (port || (port = CreateMsgPort()))
++	    && (time_request = (struct TimeRequest *)CreateIORequest(port, sizeof(*time_request))))
++	{
++		if (OpenDevice(TIMERNAME, UNIT_VBLANK, (struct IORequest *)time_request, 0) == 0)
++		{
++			#if defined(__amigaos4__)
++			struct TimerIFace *ITimer = NULL;
++			#endif
++			struct Device *TimerBase;
++
++			if ((TimerBase = time_request->Request.io_Device)
++			#if defined(__amigaos4__)
++			    && (ITimer = (struct TimerIFace *)GetInterface((struct Library *)TimerBase, "main", 1, NULL))
++			#endif
++			)
++			{
++				struct EClockVal curr_eclock;
++				ULONG prev_ev_lo = 0;
++				struct TimeVal tv;
++				int i, attempt;
++				BOOL aborted;
++
++				ReadEClock(&curr_eclock);
++				aborted = FALSE;
++
++				while(!aborted && entropy_added < ENTROPY_NEEDED)
++				{
++					for(i = 0;
++					    !aborted && i < (int)sizeof(temp_buffer) - (int)sizeof(ULONG);
++					    i++)
++					{
++						attempt = 0;
++
++						/* Ask for a one microsecond delay and measure the time
++						 * the delay actually took.
++						 */
++						do
++						{
++							time_request->Request.io_Command = TR_ADDREQUEST;
++							time_request->Time.Seconds = 0;
++							time_request->Time.Microseconds = 1;
++
++							if (DoIO((struct IORequest *)time_request) == 0)
++							{
++								prev_ev_lo = curr_eclock.ev_lo;
++								ReadEClock(&curr_eclock);
++
++								attempt++;
++							}
++							else
++								aborted = TRUE;
++						} while(!aborted && prev_ev_lo == 0 && attempt < MAX_ATTEMPTS);
++
++						if (attempt >= MAX_ATTEMPTS)
++							aborted = TRUE;
++
++						/* Since we are going for randomness, ev_hi is irrelevant */
++						temp_buffer[i] = (unsigned char)(curr_eclock.ev_lo - prev_ev_lo);
++					}
++
++					GetSysTime(TIMEVAL(&tv));
++
++					if (sizeof(temp_buffer) > sizeof(ULONG))
++						memcpy(&temp_buffer[sizeof(temp_buffer) - sizeof(ULONG)], &tv.Microseconds, sizeof(ULONG));
++
++					/* Shuffle the bits around and specify that about
++					 * one fourth of it adds to the entropy.
++					 */
++					if (!aborted)
++					{
++						SHA1(&temp_buffer[0], sizeof(temp_buffer), &data_buffer[0]);
++						RAND_add(&data_buffer[0], sizeof(data_buffer), (double)sizeof(data_buffer) / 4);
++						entropy_added += sizeof(data_buffer) / 4;
++					}
++				}
++			}
++
++			#if defined(__amigaos4__)
++			DropInterface((struct Interface *)ITimer);
++			#endif
++			CloseDevice((struct IORequest *)time_request);
++		}
++	}
++
++	DeleteIORequest((struct IORequest *)time_request);
++
++	DeleteMsgPort(port);
++
++	return(entropy_added >= ENTROPY_NEEDED);
 +}
-+#endif
++
++#endif /* OPENSSL_SYS_AMIGA */
 diff --git a/crypto/rand/rand_egd.c b/crypto/rand/rand_egd.c
 index d53b916..9f6a4e5 100644
 --- a/crypto/rand/rand_egd.c
@@ -170,6 +367,37 @@ index e3a6557..4ca5b51 100644
  #include <sys/stat.h>
  #include <fcntl.h>
  #include <unistd.h>
+diff --git a/crypto/txt_db/txt_db.c b/crypto/txt_db/txt_db.c
+index 6f2ce3b..eb5d6d7 100644
+--- a/crypto/txt_db/txt_db.c
++++ b/crypto/txt_db/txt_db.c
+@@ -156,7 +156,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
+ 		*(p++)='\0';
+ 		if ((n != num) || (*f != '\0'))
+ 			{
+-#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)	/* temporary fix :-( */
++#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYSNAME_AMIGAOS)	/* temporary fix :-( */
+ 			fprintf(stderr,"wrong number of fields on line %ld (looking for field %d, got %d, '%s' left)\n",ln,num,n,f);
+ #endif
+ 			er=2;
+@@ -165,7 +165,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
+ 		pp[n]=p;
+ 		if (!sk_OPENSSL_PSTRING_push(ret->data,pp))
+ 			{
+-#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)	/* temporary fix :-( */
++#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYSNAME_AMIGAOS)	/* temporary fix :-( */
+ 			fprintf(stderr,"failure in sk_push\n");
+ #endif
+ 			er=2;
+@@ -177,7 +177,7 @@ err:
+ 	BUF_MEM_free(buf);
+ 	if (er)
+ 		{
+-#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)
++#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYSNAME_AMIGAOS)
+ 		if (er == 1) fprintf(stderr,"OPENSSL_malloc failure\n");
+ #endif
+ 		if (ret != NULL)
 diff --git a/crypto/ui/ui_openssl.c b/crypto/ui/ui_openssl.c
 index a38c758..f1f1407 100644
 --- a/crypto/ui/ui_openssl.c
@@ -210,6 +438,27 @@ index ad40fad..e3eae87 100644
  		}
  #endif
  
+diff --git a/ssl/t1_enc.c b/ssl/t1_enc.c
+index 1923cf3..2c58820 100644
+--- a/ssl/t1_enc.c
++++ b/ssl/t1_enc.c
+@@ -713,12 +713,16 @@ int tls1_enc(SSL *s, int send)
+ 			if (ivlen > 1)
+ 				{
+ 				if ( rec->data != rec->input)
++					{
+ 					/* we can't write into the input stream:
+ 					 * Can this ever happen?? (steve)
+ 					 */
++#if !defined(OPENSSL_SYSNAME_AMIGAOS)
+ 					fprintf(stderr,
+ 						"%s:%d: rec->data != rec->input\n",
+ 						__FILE__, __LINE__);
++#endif
++					}
+ 				else if (RAND_bytes(rec->input, ivlen) <= 0)
+ 					return -1;
+ 				}
 -- 
 2.1.3
 
