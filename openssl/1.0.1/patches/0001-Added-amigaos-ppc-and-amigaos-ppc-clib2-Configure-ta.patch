@@ -1,4 +1,4 @@
-From cc573779a9ad08f0e83227a7901da3f75e9e988f Mon Sep 17 00:00:00 2001
+From 1ddb31b30748330a7f58cad9a67ab1c1f31ea8af Mon Sep 17 00:00:00 2001
 From: Sebastian Bauer <mail@sebastianbauer.info>
 Date: Tue, 9 Dec 2014 20:21:18 +0100
 Subject: [PATCH] Added "amigaos-ppc" and "amigaos-ppc-clib2" Configure target.
@@ -24,7 +24,7 @@ targeting version 4.1. Some are based on AmiSSL.
  create mode 100644 crypto/rand/rand_amiga.c
 
 diff --git a/Configure b/Configure
-index 6f0da76..00a45f0 100755
+index 541be9ec57d865f2b78253cde4737f1653fe33e9..6e99f258882a041e3954bf339d06c3a29db2440b 100755
 --- a/Configure
 +++ b/Configure
 @@ -408,6 +408,9 @@ my %table=(
@@ -38,7 +38,7 @@ index 6f0da76..00a45f0 100755
  "BSD-generic32","gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  "BSD-x86",	"gcc:-DL_ENDIAN -DTERMIOS -O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_asm}:a.out:dlfcn:bsd-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 diff --git a/apps/apps.c b/apps/apps.c
-index 3e18289..15aba54 100644
+index 3e18289a4b5b8968ce412e2bcbb208ea8e51954f..15aba54d9ef0280acf4668882534ddcef67ea823 100644
 --- a/apps/apps.c
 +++ b/apps/apps.c
 @@ -2888,7 +2888,7 @@ double app_tminterval(int stop,int usertime)
@@ -51,7 +51,7 @@ index 3e18289..15aba54 100644
  
  double app_tminterval(int stop,int usertime)
 diff --git a/apps/ca.c b/apps/ca.c
-index 9c25026..2b99cac 100644
+index 613f5bee5cc3996def4f20fdbfd276cb8cd21610..677621ee0627d9ce5e5dee4800bb6278848e1206 100644
 --- a/apps/ca.c
 +++ b/apps/ca.c
 @@ -82,7 +82,7 @@
@@ -64,7 +64,7 @@ index 9c25026..2b99cac 100644
  #  endif
  #endif
 diff --git a/crypto/cryptlib.c b/crypto/cryptlib.c
-index 0b77d8b..d756bfd 100644
+index 0b77d8b7d0e05b73e237d9a64fc43c3bc13bb95a..d756bfd7f427d0dccd7d18d9a5a4bbacce9408b4 100644
 --- a/crypto/cryptlib.c
 +++ b/crypto/cryptlib.c
 @@ -904,7 +904,7 @@ void OPENSSL_showfatal (const char *fmta,...)
@@ -93,7 +93,7 @@ index 0b77d8b..d756bfd 100644
  
  void *OPENSSL_stderr(void)	{ return stderr; }
 diff --git a/crypto/cryptlib.h b/crypto/cryptlib.h
-index d26f963..50d24bb 100644
+index d26f9630eade8a69e59def9922b84615bfcbbe8c..50d24bb0a791505ea5feaab6ac31eef500185f07 100644
 --- a/crypto/cryptlib.h
 +++ b/crypto/cryptlib.h
 @@ -79,7 +79,12 @@
@@ -111,7 +111,7 @@ index d26f963..50d24bb 100644
  #define X509_CERT_DIR		OPENSSLDIR "/certs"
  #define X509_CERT_FILE		OPENSSLDIR "/cert.pem"
 diff --git a/crypto/pkcs7/bio_pk7.c b/crypto/pkcs7/bio_pk7.c
-index 0fd31e7..f0384f5 100644
+index 0fd31e730ffab582f6dcb5ae06a416f2eaaf0657..f0384f515fe81ae29d12588918630a06000d56fd 100644
 --- a/crypto/pkcs7/bio_pk7.c
 +++ b/crypto/pkcs7/bio_pk7.c
 @@ -56,7 +56,7 @@
@@ -124,7 +124,7 @@ index 0fd31e7..f0384f5 100644
  #endif
  #include <stdio.h>
 diff --git a/crypto/rand/Makefile b/crypto/rand/Makefile
-index 27694aa..ea287f7 100644
+index 27694aa66498935d1327697c9c8a0a3035891476..ea287f77beca6ea4c07f566d8d20a57bb05d46f4 100644
 --- a/crypto/rand/Makefile
 +++ b/crypto/rand/Makefile
 @@ -18,9 +18,9 @@ APPS=
@@ -149,7 +149,7 @@ index 27694aa..ea287f7 100644
  randfile.o: ../../include/openssl/opensslconf.h
 diff --git a/crypto/rand/rand_amiga.c b/crypto/rand/rand_amiga.c
 new file mode 100644
-index 0000000..24e167e
+index 0000000000000000000000000000000000000000..24e167e603597a3d1d7edac931e6fc47528ace2d
 --- /dev/null
 +++ b/crypto/rand/rand_amiga.c
 @@ -0,0 +1,182 @@
@@ -336,7 +336,7 @@ index 0000000..24e167e
 +
 +#endif /* OPENSSL_SYS_AMIGA */
 diff --git a/crypto/rand/rand_egd.c b/crypto/rand/rand_egd.c
-index d53b916..9f6a4e5 100644
+index d53b916ebee87c7ae77700c2fb5464920ae12cc1..9f6a4e5ab75bd9fa9694845f102a1f24b112e689 100644
 --- a/crypto/rand/rand_egd.c
 +++ b/crypto/rand/rand_egd.c
 @@ -95,7 +95,7 @@
@@ -349,7 +349,7 @@ index d53b916..9f6a4e5 100644
  	{
  	return(-1);
 diff --git a/crypto/rand/rand_unix.c b/crypto/rand/rand_unix.c
-index e3a6557..4ca5b51 100644
+index e3a65571c8dfcd0b5e6fdd19e82ee48ed80fbbae..4ca5b51e6b0400f7eefcb9cf4c92b9287cf30554 100644
 --- a/crypto/rand/rand_unix.c
 +++ b/crypto/rand/rand_unix.c
 @@ -116,11 +116,13 @@
@@ -368,7 +368,7 @@ index e3a6557..4ca5b51 100644
  #include <fcntl.h>
  #include <unistd.h>
 diff --git a/crypto/txt_db/txt_db.c b/crypto/txt_db/txt_db.c
-index 6f2ce3b..eb5d6d7 100644
+index 6f2ce3b5a499334a7dfc479253ffef41e9ea70aa..eb5d6d71be5544eb25f8212008decf3a55bd2a0e 100644
 --- a/crypto/txt_db/txt_db.c
 +++ b/crypto/txt_db/txt_db.c
 @@ -156,7 +156,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
@@ -399,7 +399,7 @@ index 6f2ce3b..eb5d6d7 100644
  #endif
  		if (ret != NULL)
 diff --git a/crypto/ui/ui_openssl.c b/crypto/ui/ui_openssl.c
-index a38c758..f1f1407 100644
+index a38c7581e6a0ca10376d05fc9994f4c74a41128a..f1f140765b934d56c16fa8c0b4ef8f6b7bb4fe8a 100644
 --- a/crypto/ui/ui_openssl.c
 +++ b/crypto/ui/ui_openssl.c
 @@ -220,6 +220,12 @@
@@ -425,10 +425,10 @@ index a38c758..f1f1407 100644
  #endif
  #endif
 diff --git a/ssl/ssl_sess.c b/ssl/ssl_sess.c
-index ad40fad..e3eae87 100644
+index 235f92d824cd1e38bb4da59c55c49041e36c8379..61f5b55ee2fd4d4269a025a4101c413bdfb51149 100644
 --- a/ssl/ssl_sess.c
 +++ b/ssl/ssl_sess.c
-@@ -493,7 +493,8 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
+@@ -507,7 +507,8 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
  		try_session_cache = 0;
  		break;
  	default:
@@ -439,7 +439,7 @@ index ad40fad..e3eae87 100644
  #endif
  
 diff --git a/ssl/t1_enc.c b/ssl/t1_enc.c
-index 1923cf3..2c58820 100644
+index 1308c0344feafb76ff84187ad36f7c5f39ae6a4f..9c142ae4ec902c94bb002619af543dc78f830a2a 100644
 --- a/ssl/t1_enc.c
 +++ b/ssl/t1_enc.c
 @@ -713,12 +713,16 @@ int tls1_enc(SSL *s, int send)
@@ -460,5 +460,5 @@ index 1923cf3..2c58820 100644
  					return -1;
  				}
 -- 
-2.1.3
+2.1.4
 
