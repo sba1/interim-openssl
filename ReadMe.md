@@ -4,7 +4,7 @@ Simple OpenSSL Port for AmigaOS
 This is an interim solution for maintaining a recent 
 version of OpenSSL for AmigaOS. The real (and not 
 AmigaOS 4.x specific) solution is developed in form of 
-AmiSSL at http://sourceforge.net/projects/amissl/
+AmiSSL at https://github.com/jens-maus/amissl.
 
 Building 
 --------
