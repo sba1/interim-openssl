@@ -9,8 +9,7 @@ AmiSSL at https://github.com/jens-maus/amissl.
 Building 
 --------
 
-Simply invoke the makefile. The only problem is that it 
-does not work yet. This is WIP.
+Simply invoke the makefile.
 
 Patch management
 ----------------
