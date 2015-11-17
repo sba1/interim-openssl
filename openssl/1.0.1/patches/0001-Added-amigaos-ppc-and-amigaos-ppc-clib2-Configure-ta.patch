@@ -1,4 +1,4 @@
-From 02e06ca9249ff144e7db3d064e4ea4c4993714a6 Mon Sep 17 00:00:00 2001
+From ce12a3f7279e45b01a0dc242fe712289c77bb497 Mon Sep 17 00:00:00 2001
 From: Sebastian Bauer <mail@sebastianbauer.info>
 Date: Tue, 9 Dec 2014 20:21:18 +0100
 Subject: [PATCH] Added "amigaos-ppc" and "amigaos-ppc-clib2" Configure target.
@@ -18,9 +18,10 @@ targeting version 4.1. Some are based on AmiSSL.
  crypto/rand/rand_unix.c  |   2 +-
  crypto/txt_db/txt_db.c   |   6 +-
  crypto/ui/ui_openssl.c   |   8 ++-
+ ssl/d1_both.c            |   2 +-
  ssl/ssl_sess.c           |   4 +-
  ssl/t1_enc.c             |   5 +-
- 14 files changed, 217 insertions(+), 15 deletions(-)
+ 15 files changed, 218 insertions(+), 16 deletions(-)
  create mode 100644 crypto/rand/rand_amiga.c
 
 diff --git a/Configure b/Configure
@@ -510,6 +511,25 @@ index 829ea8691eb5798100ff16879b83e0e638f56b3a..034ea7dea6a05d515c154f3534503cdd
  static FILE *tty_in, *tty_out;
  static int is_a_tty;
  
+diff --git a/ssl/d1_both.c b/ssl/d1_both.c
+index 8dd8ea33ca79cd4b83c622dc9d5af5a7c1b5fd09..9a32a8b8d84f41ba7cc76325032a3dd46bc2b728 100644
+--- a/ssl/d1_both.c
++++ b/ssl/d1_both.c
+@@ -1142,13 +1142,13 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
+     return (l);
+ }
+ 
+ int dtls1_read_failed(SSL *s, int code)
+ {
+     if (code > 0) {
+-        fprintf(stderr, "invalid state reached %s:%d", __FILE__, __LINE__);
++//        fprintf(stderr, "invalid state reached %s:%d", __FILE__, __LINE__);
+         return 1;
+     }
+ 
+     if (!dtls1_is_timer_expired(s)) {
+         /*
+          * not a timeout, none of our business, let higher layers handle
 diff --git a/ssl/ssl_sess.c b/ssl/ssl_sess.c
 index 1ad9dc79493c448f1d757e63fbec1a0cd2036516..bfdf48d079234504a022627737f48d021f9128c4 100644
 --- a/ssl/ssl_sess.c
