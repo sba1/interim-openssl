@@ -1,6 +1,6 @@
-From afd73009a413d163772b37f8228c4bb6ffcbce0c Mon Sep 17 00:00:00 2001
+From 18476e5f58bed4ef4903d0609daa7a743d2018ac Mon Sep 17 00:00:00 2001
 From: Sebastian Bauer <mail@sebastianbauer.info>
-Date: Wed, 18 Nov 2015 14:29:09 +0100
+Date: Wed, 18 Nov 2015 14:51:58 +0100
 Subject: [PATCH] Added "amigaos-ppc" and "amigaos-ppc-clib2" Configure target.
 
 Also applied some modifications for a possible AmigaOS port
@@ -30,7 +30,7 @@ targeting version 4.1. Some are based on AmiSSL.
  create mode 100644 crypto/rand/rand_amiga.c
 
 diff --git a/Configure b/Configure
-index 60ec3783e605e35802dbae1ba825ff1c913fe407..116cc2891e3d72578b500dd3bd199f2a301a0963 100755
+index 60ec3783e605e35802dbae1ba825ff1c913fe407..23b9e2edf5c9f68bb134667c384e76bf7090f823 100755
 --- a/Configure
 +++ b/Configure
 @@ -405,12 +405,15 @@ my %table=(
@@ -41,7 +41,7 @@ index 60ec3783e605e35802dbae1ba825ff1c913fe407..116cc2891e3d72578b500dd3bd199f2a
  "android-armv7","gcc:-march=armv7-a -mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  
 +"amigaos-ppc","ppc-amigaos-gcc:-DOPENSSL_SYSNAME_AMIGAOS -DNO_FORK -DNO_SYS_UN_H -DNO_SYSLOG -DB_ENDIAN -DOPENSSL_NO_SPEED -O3 -fdata-sections -ffunction-sections -fomit-frame-pointer -Wall:::::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-+"amigaos-ppc-clib2","ppc-amigaos-gcc:-mcrt=clib2 -DNO_SYS_PARAM_H -DOPENSSL_SYSNAME_AMIGAOS -DNO_FORK -DNO_SYS_UN_H -DNO_SYSLOG -DB_ENDIAN -DOPENSSL_NO_SPEED -O3 -fdata-sections -ffunction-sections -fomit-frame-pointer -Wall:::::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"amigaos-ppc-clib2-no-read-pw","ppc-amigaos-gcc:-mcrt=clib2 -DNO_EVP_READ_PW_STRING_MIN -DNO_SYS_PARAM_H -DOPENSSL_SYSNAME_AMIGAOS -DNO_FORK -DNO_SYS_UN_H -DNO_SYSLOG -DB_ENDIAN -DOPENSSL_NO_SPEED -O3 -fdata-sections -ffunction-sections -fomit-frame-pointer -Wall:::::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 +
  #### *BSD [do see comment about ${BSDthreads} above!]
  "BSD-generic32","gcc:-O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
