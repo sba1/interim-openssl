@@ -1,4 +1,4 @@
-From d2f94137b0ec83afbcd0103291c1c6b719fb6c7c Mon Sep 17 00:00:00 2001
+From afd73009a413d163772b37f8228c4bb6ffcbce0c Mon Sep 17 00:00:00 2001
 From: Sebastian Bauer <mail@sebastianbauer.info>
 Date: Wed, 18 Nov 2015 14:29:09 +0100
 Subject: [PATCH] Added "amigaos-ppc" and "amigaos-ppc-clib2" Configure target.
@@ -9,13 +9,16 @@ targeting version 4.1. Some are based on AmiSSL.
  Configure                |   3 +
  apps/apps.c              |   2 +-
  apps/ca.c                |   2 +-
- crypto/cryptlib.c        |   4 +-
+ crypto/cryptlib.c        |   6 +-
  crypto/cryptlib.h        |   5 ++
+ crypto/evp/evp_key.c     |   6 ++
+ crypto/pem/pem_lib.c     |   2 +-
  crypto/pkcs7/bio_pk7.c   |   2 +-
  crypto/rand/Makefile     |   5 +-
  crypto/rand/rand_amiga.c | 182 +++++++++++++++++++++++++++++++++++++++++++++++
  crypto/rand/rand_egd.c   |   2 +-
  crypto/rand/rand_unix.c  |   2 +-
+ crypto/rsa/rsa_sign.c    |   2 +-
  crypto/txt_db/txt_db.c   |   6 +-
  crypto/ui/ui_openssl.c   |   8 ++-
  ssl/d1_both.c            |   6 +-
@@ -23,7 +26,7 @@ targeting version 4.1. Some are based on AmiSSL.
  ssl/s3_srvr.c            |   2 +-
  ssl/ssl_sess.c           |   4 +-
  ssl/t1_enc.c             |   5 +-
- 17 files changed, 225 insertions(+), 21 deletions(-)
+ 20 files changed, 235 insertions(+), 23 deletions(-)
  create mode 100644 crypto/rand/rand_amiga.c
 
 diff --git a/Configure b/Configure
@@ -85,10 +88,10 @@ index 97ad0c1ffe96b55386756bbf4677a77bf0e0d73e..be0c0edf131e4b176a1d7a8aeae032e3
  #include "apps.h"
  
 diff --git a/crypto/cryptlib.c b/crypto/cryptlib.c
-index c654a5c84f2c6d53bd1159a20cdab6d6cb1f76a4..f95e387cbd3e82479931386061795c3199a3bb34 100644
+index c654a5c84f2c6d53bd1159a20cdab6d6cb1f76a4..5258b6f8531061f8b4d383cbbd741aeba9d970b6 100644
 --- a/crypto/cryptlib.c
 +++ b/crypto/cryptlib.c
-@@ -941,36 +941,38 @@ void OPENSSL_showfatal(const char *fmta, ...)
+@@ -941,42 +941,46 @@ void OPENSSL_showfatal(const char *fmta, ...)
  #else
  void OPENSSL_showfatal(const char *fmta, ...)
  {
@@ -124,10 +127,18 @@ index c654a5c84f2c6d53bd1159a20cdab6d6cb1f76a4..f95e387cbd3e82479931386061795c31
 +#endif
  }
  
++#if 0
  void *OPENSSL_stderr(void)
  {
      return stderr;
  }
++#endif
+ 
+ int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)
+ {
+     size_t i;
+     const unsigned char *a = in_a;
+     const unsigned char *b = in_b;
 diff --git a/crypto/cryptlib.h b/crypto/cryptlib.h
 index fba180a6b2fb7b7e65b92ca1c88591569def6f30..1ed7d0b237578251a0465a9dd7f5175c0a86c7bb 100644
 --- a/crypto/cryptlib.h
@@ -150,6 +161,61 @@ index fba180a6b2fb7b7e65b92ca1c88591569def6f30..1ed7d0b237578251a0465a9dd7f5175c
  #  define X509_CERT_FILE          "SSLCERTS:cert.pem"
  #  define X509_PRIVATE_DIR        "SSLPRIVATE:"
  # endif
+diff --git a/crypto/evp/evp_key.c b/crypto/evp/evp_key.c
+index 71fa627b20d3ed22e3c238cda5640e09e05c26d1..c5ea359714d9dc90dd82ec4b902d4b92ff4ce7fc 100644
+--- a/crypto/evp/evp_key.c
++++ b/crypto/evp/evp_key.c
+@@ -91,12 +91,17 @@ char *EVP_get_pw_prompt(void)
+  */
+ int EVP_read_pw_string(char *buf, int len, const char *prompt, int verify)
+ {
+     return EVP_read_pw_string_min(buf, 0, len, prompt, verify);
+ }
+ 
++/* FIXME: For some reasons ld's garbage collector won't collect this when
++ * compiling SimpleMail with static ssl support even though none uses this
++ * functions.
++ */
++#ifndef NO_EVP_READ_PW_STRING_MIN
+ int EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
+                            int verify)
+ {
+     int ret;
+     char buff[BUFSIZ];
+     UI *ui;
+@@ -112,12 +117,13 @@ int EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
+                              buf);
+     ret = UI_process(ui);
+     UI_free(ui);
+     OPENSSL_cleanse(buff, BUFSIZ);
+     return ret;
+ }
++#endif
+ 
+ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
+                    const unsigned char *salt, const unsigned char *data,
+                    int datal, int count, unsigned char *key,
+                    unsigned char *iv)
+ {
+diff --git a/crypto/pem/pem_lib.c b/crypto/pem/pem_lib.c
+index 55071616e203bb57aff408569e819cc9f55704a1..8e6a9331b0fb2379a53e9fd04235f9ad74b32f3d 100644
+--- a/crypto/pem/pem_lib.c
++++ b/crypto/pem/pem_lib.c
+@@ -81,13 +81,13 @@ const char PEM_version[] = "PEM" OPENSSL_VERSION_PTEXT;
+ static int load_iv(char **fromp, unsigned char *to, int num);
+ static int check_pem(const char *nm, const char *name);
+ int pem_check_suffix(const char *pem_str, const char *suffix);
+ 
+ int PEM_def_callback(char *buf, int num, int w, void *key)
+ {
+-#ifdef OPENSSL_NO_FP_API
++#if defined(OPENSSL_NO_FP_API) || defined(OPENSSL_SYSNAME_AMIGAOS)
+     /*
+      * We should not ever call the default callback routine from windows.
+      */
+     PEMerr(PEM_F_PEM_DEF_CALLBACK, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+     return (-1);
+ #else
 diff --git a/crypto/pkcs7/bio_pk7.c b/crypto/pkcs7/bio_pk7.c
 index fae1c564c48d385d7572507776406093d6433de2..da92a97e48a812e49cbe8dd15eea4f67bb94b47b 100644
 --- a/crypto/pkcs7/bio_pk7.c
@@ -431,6 +497,25 @@ index 266111edda8c1d1d7bcfe2aa62a81c6ca6ffb4e3..366bf4dec75e29587ac43def8c89ea80
  # include <sys/times.h>
  # include <sys/stat.h>
  # include <fcntl.h>
+diff --git a/crypto/rsa/rsa_sign.c b/crypto/rsa/rsa_sign.c
+index bc91da2c1fe9cdaefee6843ea7e98583bafeb0a6..705eb8aadf09e9c5978bcf3b0a778ca8e8e2113d 100644
+--- a/crypto/rsa/rsa_sign.c
++++ b/crypto/rsa/rsa_sign.c
+@@ -263,13 +263,13 @@ int int_rsa_verify(int dtype, const unsigned char *m,
+         if (sigtype != dtype) {
+             if (((dtype == NID_md5) &&
+                  (sigtype == NID_md5WithRSAEncryption)) ||
+                 ((dtype == NID_md2) &&
+                  (sigtype == NID_md2WithRSAEncryption))) {
+                 /* ok, we will let it through */
+-#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)
++#if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYSNAME_AMIGAOS)
+                 fprintf(stderr,
+                         "signature has problems, re-make with post SSLeay045\n");
+ #endif
+             } else {
+                 RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_ALGORITHM_MISMATCH);
+                 goto err;
 diff --git a/crypto/txt_db/txt_db.c b/crypto/txt_db/txt_db.c
 index f9b42ac6e5880c0aaf387d7d3018ece09a16ca72..5f662073610a04a95e037096619b2a49a9ca50ec 100644
 --- a/crypto/txt_db/txt_db.c
