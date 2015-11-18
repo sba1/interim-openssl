@@ -1,6 +1,6 @@
-From ce12a3f7279e45b01a0dc242fe712289c77bb497 Mon Sep 17 00:00:00 2001
+From d2f94137b0ec83afbcd0103291c1c6b719fb6c7c Mon Sep 17 00:00:00 2001
 From: Sebastian Bauer <mail@sebastianbauer.info>
-Date: Tue, 9 Dec 2014 20:21:18 +0100
+Date: Wed, 18 Nov 2015 14:29:09 +0100
 Subject: [PATCH] Added "amigaos-ppc" and "amigaos-ppc-clib2" Configure target.
 
 Also applied some modifications for a possible AmigaOS port
@@ -18,10 +18,12 @@ targeting version 4.1. Some are based on AmiSSL.
  crypto/rand/rand_unix.c  |   2 +-
  crypto/txt_db/txt_db.c   |   6 +-
  crypto/ui/ui_openssl.c   |   8 ++-
- ssl/d1_both.c            |   2 +-
+ ssl/d1_both.c            |   6 +-
+ ssl/d1_enc.c             |   6 +-
+ ssl/s3_srvr.c            |   2 +-
  ssl/ssl_sess.c           |   4 +-
  ssl/t1_enc.c             |   5 +-
- 15 files changed, 218 insertions(+), 16 deletions(-)
+ 17 files changed, 225 insertions(+), 21 deletions(-)
  create mode 100644 crypto/rand/rand_amiga.c
 
 diff --git a/Configure b/Configure
@@ -512,7 +514,7 @@ index 829ea8691eb5798100ff16879b83e0e638f56b3a..034ea7dea6a05d515c154f3534503cdd
  static int is_a_tty;
  
 diff --git a/ssl/d1_both.c b/ssl/d1_both.c
-index 8dd8ea33ca79cd4b83c622dc9d5af5a7c1b5fd09..9a32a8b8d84f41ba7cc76325032a3dd46bc2b728 100644
+index 8dd8ea33ca79cd4b83c622dc9d5af5a7c1b5fd09..401bd88cd1bf8a9bbddad29aaf1786d84d8d0586 100644
 --- a/ssl/d1_both.c
 +++ b/ssl/d1_both.c
 @@ -1142,13 +1142,13 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
@@ -530,6 +532,79 @@ index 8dd8ea33ca79cd4b83c622dc9d5af5a7c1b5fd09..9a32a8b8d84f41ba7cc76325032a3dd4
      if (!dtls1_is_timer_expired(s)) {
          /*
           * not a timeout, none of our business, let higher layers handle
+@@ -1214,13 +1214,13 @@ int dtls1_retransmit_buffered_messages(SSL *s)
+         frag = (hm_fragment *)item->data;
+         if (dtls1_retransmit_message(s, (unsigned short)
+                                      dtls1_get_queue_priority
+                                      (frag->msg_header.seq,
+                                       frag->msg_header.is_ccs), 0,
+                                      &found) <= 0 && found) {
+-            fprintf(stderr, "dtls1_retransmit_message() failed\n");
++//            fprintf(stderr, "dtls1_retransmit_message() failed\n");
+             return -1;
+         }
+     }
+ 
+     return 1;
+ }
+@@ -1314,13 +1314,13 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
+     memset(seq64be, 0, sizeof(seq64be));
+     seq64be[6] = (unsigned char)(seq >> 8);
+     seq64be[7] = (unsigned char)seq;
+ 
+     item = pqueue_find(s->d1->sent_messages, seq64be);
+     if (item == NULL) {
+-        fprintf(stderr, "retransmit:  message %d non-existant\n", seq);
++//        fprintf(stderr, "retransmit:  message %d non-existant\n", seq);
+         *found = 0;
+         return 0;
+     }
+ 
+     *found = 1;
+     frag = (hm_fragment *)item->data;
+diff --git a/ssl/d1_enc.c b/ssl/d1_enc.c
+index e876364f2c89dffa737b1ec8285992203e334075..c7f7070b0b5bcf25d1dba178874625e8d46efc69 100644
+--- a/ssl/d1_enc.c
++++ b/ssl/d1_enc.c
+@@ -154,15 +154,17 @@ int dtls1_enc(SSL *s, int send)
+         rec = &(s->s3->wrec);
+         if (s->enc_write_ctx == NULL)
+             enc = NULL;
+         else {
+             enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
+             if (rec->data != rec->input)
++            {
+                 /* we can't write into the input stream */
+-                fprintf(stderr, "%s:%d: rec->data != rec->input\n",
+-                        __FILE__, __LINE__);
++//                fprintf(stderr, "%s:%d: rec->data != rec->input\n",
++//                        __FILE__, __LINE__);
++            }
+             else if (EVP_CIPHER_block_size(ds->cipher) > 1) {
+                 if (RAND_bytes(rec->input, EVP_CIPHER_block_size(ds->cipher))
+                     <= 0)
+                     return -1;
+             }
+         }
+diff --git a/ssl/s3_srvr.c b/ssl/s3_srvr.c
+index 3a5f71d745fafd390f1384ff9afbf96fda43aa35..1618902d4eae56de1cf1931cefa6324218f37d39 100644
+--- a/ssl/s3_srvr.c
++++ b/ssl/s3_srvr.c
+@@ -3122,13 +3122,13 @@ int ssl3_get_cert_verify(SSL *s)
+             || pkey->type == NID_id_GostR3410_2001) {
+         unsigned char signature[64];
+         int idx;
+         EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
+         EVP_PKEY_verify_init(pctx);
+         if (i != 64) {
+-            fprintf(stderr, "GOST signature length is %d", i);
++//            fprintf(stderr, "GOST signature length is %d", i);
+         }
+         for (idx = 0; idx < 64; idx++) {
+             signature[63 - idx] = p[idx];
+         }
+         j = EVP_PKEY_verify(pctx, signature, 64, s->s3->tmp.cert_verify_md,
+                             32);
 diff --git a/ssl/ssl_sess.c b/ssl/ssl_sess.c
 index 1ad9dc79493c448f1d757e63fbec1a0cd2036516..bfdf48d079234504a022627737f48d021f9128c4 100644
 --- a/ssl/ssl_sess.c
