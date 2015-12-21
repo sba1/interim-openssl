@@ -1,12 +1,12 @@
-From a3e500a02a94adb74f9b03499b3d71a2ec2a89dc Mon Sep 17 00:00:00 2001
+From 84cbbdb09845f644ae0c190180293c58e0606e85 Mon Sep 17 00:00:00 2001
 From: Sebastian Bauer <mail@sebastianbauer.info>
-Date: Wed, 18 Nov 2015 14:51:58 +0100
+Date: Mon, 21 Dec 2015 20:50:48 +0100
 Subject: [PATCH] Added "amigaos-ppc" and "amigaos-ppc-clib2" Configure target.
 
 Also applied some modifications for a possible AmigaOS port
 targeting version 4.1. Some are based on AmiSSL.
 ---
- Configure                |   3 +
+ Configure                |   4 ++
  apps/apps.c              |   2 +-
  apps/ca.c                |   2 +-
  crypto/cryptlib.c        |   6 +-
@@ -26,14 +26,14 @@ targeting version 4.1. Some are based on AmiSSL.
  ssl/s3_srvr.c            |   2 +-
  ssl/ssl_sess.c           |   4 +-
  ssl/t1_enc.c             |   5 +-
- 20 files changed, 235 insertions(+), 23 deletions(-)
+ 20 files changed, 236 insertions(+), 23 deletions(-)
  create mode 100644 crypto/rand/rand_amiga.c
 
 diff --git a/Configure b/Configure
-index fdf8d9a97eec896d653778e9dc05b7c0ccbc1907..b875b4523141922f43d2ce7b985267f04701b7be 100755
+index fdf8d9a97eec896d653778e9dc05b7c0ccbc1907..b7222bb84a059d2aa79460190d3847ef48f807ec 100755
 --- a/Configure
 +++ b/Configure
-@@ -409,12 +409,15 @@ my %table=(
+@@ -409,12 +409,16 @@ my %table=(
  
  # Android: linux-* but without pointers to headers and libs.
  "android","gcc:-mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -41,6 +41,7 @@ index fdf8d9a97eec896d653778e9dc05b7c0ccbc1907..b875b4523141922f43d2ce7b985267f0
  "android-armv7","gcc:-march=armv7-a -mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  
 +"amigaos-ppc","ppc-amigaos-gcc:-DOPENSSL_SYSNAME_AMIGAOS -DNO_FORK -DNO_SYS_UN_H -DNO_SYSLOG -DB_ENDIAN -DOPENSSL_NO_SPEED -O3 -fdata-sections -ffunction-sections -fomit-frame-pointer -Wall:::::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"amigaos-ppc-clib2","ppc-amigaos-gcc:-mcrt=clib2 -DNO_SYS_PARAM_H -DOPENSSL_SYSNAME_AMIGAOS -DNO_FORK -DNO_SYS_UN_H -DNO_SYSLOG -DB_ENDIAN -DOPENSSL_NO_SPEED -O3 -fdata-sections -ffunction-sections -fomit-frame-pointer -Wall:::::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 +"amigaos-ppc-clib2-no-read-pw","ppc-amigaos-gcc:-mcrt=clib2 -DNO_EVP_READ_PW_STRING_MIN -DNO_SYS_PARAM_H -DOPENSSL_SYSNAME_AMIGAOS -DNO_FORK -DNO_SYS_UN_H -DNO_SYSLOG -DB_ENDIAN -DOPENSSL_NO_SPEED -O3 -fdata-sections -ffunction-sections -fomit-frame-pointer -Wall:::::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 +
  #### *BSD [do see comment about ${BSDthreads} above!]
