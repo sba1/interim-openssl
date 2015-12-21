@@ -1,4 +1,4 @@
-From 18476e5f58bed4ef4903d0609daa7a743d2018ac Mon Sep 17 00:00:00 2001
+From a3e500a02a94adb74f9b03499b3d71a2ec2a89dc Mon Sep 17 00:00:00 2001
 From: Sebastian Bauer <mail@sebastianbauer.info>
 Date: Wed, 18 Nov 2015 14:51:58 +0100
 Subject: [PATCH] Added "amigaos-ppc" and "amigaos-ppc-clib2" Configure target.
@@ -30,10 +30,10 @@ targeting version 4.1. Some are based on AmiSSL.
  create mode 100644 crypto/rand/rand_amiga.c
 
 diff --git a/Configure b/Configure
-index 60ec3783e605e35802dbae1ba825ff1c913fe407..23b9e2edf5c9f68bb134667c384e76bf7090f823 100755
+index fdf8d9a97eec896d653778e9dc05b7c0ccbc1907..b875b4523141922f43d2ce7b985267f04701b7be 100755
 --- a/Configure
 +++ b/Configure
-@@ -405,12 +405,15 @@ my %table=(
+@@ -409,12 +409,15 @@ my %table=(
  
  # Android: linux-* but without pointers to headers and libs.
  "android","gcc:-mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -50,10 +50,10 @@ index 60ec3783e605e35802dbae1ba825ff1c913fe407..23b9e2edf5c9f68bb134667c384e76bf
  "debug-BSD-x86-elf",	"gcc:-DL_ENDIAN -O3 -Wall -g::${BSDthreads}:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:bsd-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  "BSD-sparcv8",	"gcc:-DB_ENDIAN -O3 -mcpu=v8 -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${sparcv8_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 diff --git a/apps/apps.c b/apps/apps.c
-index 6801238348315c448f11b1a35870d07c83f3c7f5..5b0361ea001d446b817262346fb8c165dc149c08 100644
+index 8ab4833668bcf4ac270ca68ed52747fdb430ebae..39f26ebbabf42ded6bfe7db4546ae1c3c4c9d94d 100644
 --- a/apps/apps.c
 +++ b/apps/apps.c
-@@ -2744,13 +2744,13 @@ double app_tminterval(int stop, int usertime)
+@@ -2745,13 +2745,13 @@ double app_tminterval(int stop, int usertime)
          ret = (__int64)(tmstop.QuadPart - tmstart.QuadPart) * 1e-7;
      }
  
@@ -69,7 +69,7 @@ index 6801238348315c448f11b1a35870d07c83f3c7f5..5b0361ea001d446b817262346fb8c165
      double ret = 0;
      static clock_t tmstart;
 diff --git a/apps/ca.c b/apps/ca.c
-index 97ad0c1ffe96b55386756bbf4677a77bf0e0d73e..be0c0edf131e4b176a1d7a8aeae032e344fe863d 100644
+index 4d64eb2dc39615c77bd94efb9eb40bd1009dfdac..2a41c05edb898b0eb3e25d743e905e8cd4b9b0ce 100644
 --- a/apps/ca.c
 +++ b/apps/ca.c
 @@ -79,13 +79,13 @@
@@ -88,10 +88,10 @@ index 97ad0c1ffe96b55386756bbf4677a77bf0e0d73e..be0c0edf131e4b176a1d7a8aeae032e3
  #include "apps.h"
  
 diff --git a/crypto/cryptlib.c b/crypto/cryptlib.c
-index c654a5c84f2c6d53bd1159a20cdab6d6cb1f76a4..5258b6f8531061f8b4d383cbbd741aeba9d970b6 100644
+index eccee72311f097ee0a8226597fd7a18ed23bbfec..f2c3c097b6f0b6888217664456f1359d7768a4c8 100644
 --- a/crypto/cryptlib.c
 +++ b/crypto/cryptlib.c
-@@ -941,42 +941,46 @@ void OPENSSL_showfatal(const char *fmta, ...)
+@@ -957,42 +957,46 @@ void OPENSSL_showfatal(const char *fmta, ...)
  #else
  void OPENSSL_showfatal(const char *fmta, ...)
  {
@@ -162,7 +162,7 @@ index fba180a6b2fb7b7e65b92ca1c88591569def6f30..1ed7d0b237578251a0465a9dd7f5175c
  #  define X509_PRIVATE_DIR        "SSLPRIVATE:"
  # endif
 diff --git a/crypto/evp/evp_key.c b/crypto/evp/evp_key.c
-index 71fa627b20d3ed22e3c238cda5640e09e05c26d1..c5ea359714d9dc90dd82ec4b902d4b92ff4ce7fc 100644
+index 5be9e336f9e717d4a950c4ef3e6d4bd1d4975cb1..d6e4813e61637f5bce8de888dbfc2334a76de718 100644
 --- a/crypto/evp/evp_key.c
 +++ b/crypto/evp/evp_key.c
 @@ -91,12 +91,17 @@ char *EVP_get_pw_prompt(void)
@@ -183,7 +183,7 @@ index 71fa627b20d3ed22e3c238cda5640e09e05c26d1..c5ea359714d9dc90dd82ec4b902d4b92
      int ret;
      char buff[BUFSIZ];
      UI *ui;
-@@ -112,12 +117,13 @@ int EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
+@@ -114,12 +119,13 @@ int EVP_read_pw_string_min(char *buf, int min, int len, const char *prompt,
                               buf);
      ret = UI_process(ui);
      UI_free(ui);
@@ -498,10 +498,10 @@ index 266111edda8c1d1d7bcfe2aa62a81c6ca6ffb4e3..366bf4dec75e29587ac43def8c89ea80
  # include <sys/stat.h>
  # include <fcntl.h>
 diff --git a/crypto/rsa/rsa_sign.c b/crypto/rsa/rsa_sign.c
-index bc91da2c1fe9cdaefee6843ea7e98583bafeb0a6..705eb8aadf09e9c5978bcf3b0a778ca8e8e2113d 100644
+index 41c827f45313787a0b374e8ab1ef23ab09f7dbc2..e7a62ad9f18d60e1713e7f8ce4111cc10bd8265c 100644
 --- a/crypto/rsa/rsa_sign.c
 +++ b/crypto/rsa/rsa_sign.c
-@@ -263,13 +263,13 @@ int int_rsa_verify(int dtype, const unsigned char *m,
+@@ -262,13 +262,13 @@ int int_rsa_verify(int dtype, const unsigned char *m,
          if (sigtype != dtype) {
              if (((dtype == NID_md5) &&
                   (sigtype == NID_md5WithRSAEncryption)) ||
@@ -599,7 +599,7 @@ index 829ea8691eb5798100ff16879b83e0e638f56b3a..034ea7dea6a05d515c154f3534503cdd
  static int is_a_tty;
  
 diff --git a/ssl/d1_both.c b/ssl/d1_both.c
-index 8dd8ea33ca79cd4b83c622dc9d5af5a7c1b5fd09..401bd88cd1bf8a9bbddad29aaf1786d84d8d0586 100644
+index d453c07c8e69ab250ba8be11d9b450cb7db0db10..085ddb3d15f8de4646b31f25f096ca053e686552 100644
 --- a/ssl/d1_both.c
 +++ b/ssl/d1_both.c
 @@ -1142,13 +1142,13 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
@@ -672,15 +672,15 @@ index e876364f2c89dffa737b1ec8285992203e334075..c7f7070b0b5bcf25d1dba178874625e8
              }
          }
 diff --git a/ssl/s3_srvr.c b/ssl/s3_srvr.c
-index 3a5f71d745fafd390f1384ff9afbf96fda43aa35..1618902d4eae56de1cf1931cefa6324218f37d39 100644
+index fcfc2fb9698f48962cbdfb619ed30d25352dc4a6..72414fb65395c854ca791a21962389395091a5ea 100644
 --- a/ssl/s3_srvr.c
 +++ b/ssl/s3_srvr.c
-@@ -3122,13 +3122,13 @@ int ssl3_get_cert_verify(SSL *s)
-             || pkey->type == NID_id_GostR3410_2001) {
-         unsigned char signature[64];
-         int idx;
-         EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
-         EVP_PKEY_verify_init(pctx);
+@@ -3146,13 +3146,13 @@ int ssl3_get_cert_verify(SSL *s)
+             EVP_PKEY_CTX_free(pctx);
+             al = SSL_AD_INTERNAL_ERROR;
+             SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+             goto f_err;
+         }
          if (i != 64) {
 -            fprintf(stderr, "GOST signature length is %d", i);
 +//            fprintf(stderr, "GOST signature length is %d", i);
@@ -691,7 +691,7 @@ index 3a5f71d745fafd390f1384ff9afbf96fda43aa35..1618902d4eae56de1cf1931cefa63242
          j = EVP_PKEY_verify(pctx, signature, 64, s->s3->tmp.cert_verify_md,
                              32);
 diff --git a/ssl/ssl_sess.c b/ssl/ssl_sess.c
-index 1ad9dc79493c448f1d757e63fbec1a0cd2036516..bfdf48d079234504a022627737f48d021f9128c4 100644
+index de4c59e21fecb6c1b8b141b36f1e83c3c41d3de2..973b3b3e1a013fb420823a0efb8e5f213ad41f59 100644
 --- a/ssl/ssl_sess.c
 +++ b/ssl/ssl_sess.c
 @@ -624,14 +624,14 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
@@ -712,10 +712,10 @@ index 1ad9dc79493c448f1d757e63fbec1a0cd2036516..bfdf48d079234504a022627737f48d02
          ret == NULL &&
          !(s->session_ctx->session_cache_mode &
 diff --git a/ssl/t1_enc.c b/ssl/t1_enc.c
-index 8f45294e5579a540f7ffb9bfa1d4025efb591339..707024447cfb7e5705f276265be329e843b29433 100644
+index 985356d74b2a47c5d0177d82ba05703ff4305541..e6f9d26193bf778e635abc14749e50a0525fa67a 100644
 --- a/ssl/t1_enc.c
 +++ b/ssl/t1_enc.c
-@@ -744,20 +744,23 @@ int tls1_enc(SSL *s, int send)
+@@ -754,20 +754,23 @@ int tls1_enc(SSL *s, int send)
              if (s->version >= TLS1_1_VERSION
                  && EVP_CIPHER_mode(enc) == EVP_CIPH_CBC_MODE)
                  ivlen = EVP_CIPHER_iv_length(enc);
